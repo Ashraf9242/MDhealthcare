@@ -20,10 +20,18 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Copy files to VM
+    - name: Create temp folder on VM
       run: |
-        scp -r * ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}:/var/www/html/
+        ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} "mkdir -p ~/site-files"
 
-    - name: Restart Nginx (optional)
+    - name: Copy files to VM temp folder
+      run: |
+        scp -r * ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}:~/site-files/
+
+    - name: Move files to /var/www/html/ with sudo
+      run: |
+        ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} "sudo cp -r ~/site-files/* /var/www/html/"
+
+    - name: Restart Nginx
       run: |
         ssh ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} "sudo systemctl restart nginx"
